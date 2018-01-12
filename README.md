@@ -1,0 +1,1 @@
+This currently just adds to a playlist called WatchFirst. I might make it customizable later. Honestly theres a lot that could  be done to improve this; it only barely works.
