@@ -7,7 +7,7 @@
     - If `all`, then when elem is a non-zero-length array
     - If not `all`, then when elem is a non-null value
      */
-    const waitForElem = async (elemQueryFunc, chances = 3, ms = 1000, all = false) => {
+    const waitForElem = async (elemQueryFunc, chances = 3, ms = 200, all = false) => {
         let result
         for (let i = 0; i < chances; i++) {
             result = elemQueryFunc()
@@ -26,9 +26,9 @@
     }
 
     // Attempts to find an element matching `query`, waiting `ms` * `chances` for the elem to render before giving up
-    const findElem = async (query, fromElem = document, all = false, chances = 3, ms = 1000) => {
+    const findElem = async (query, fromElem = document, all = false, chances = 3, ms = 200) => {
         const selector = getQuerySelector(query, fromElem, all)
-        const result = waitForElem(selector, chances, ms, all)
+        const result = await waitForElem(selector, chances, ms, all)
         if (!result) {
             throw new Error(`Couldnt find '${query}' in page!`)
         }
