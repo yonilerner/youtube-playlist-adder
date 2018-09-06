@@ -39,10 +39,10 @@
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
-        const addToButton = await findElem('.yt-icon-button[aria-label="Save to"] .ytd-button-renderer', menuRenderer)
+        const saveToButton = await findElem('.yt-icon-button[aria-label="Save to"] .ytd-button-renderer', menuRenderer)
         // Only click the Add to button if the menu is inactive
         if (!menuRenderer.hasAttribute('menu-active')) {
-            addToButton.click()
+            saveToButton.click()
         }
         // Always wait a second for the #playlists box to sho wup
         await sleep(1000)
@@ -60,14 +60,14 @@
         const playlistCheckbox = await findElem('.style-scope.paper-checkbox#checkbox', playlistsElem.children[desiredPlaylist.i])
         /*
         If its not already checked, then check it, effectively adding the video to the playlist
-        Otherwise, click the addToButton to hide the playlists box. This reason for this is that if we are adding
+        Otherwise, click the saveToButton to hide the playlists box. This reason for this is that if we are adding
             a video to a playlist, we want the box to stay up as a visual confirmation that the video was added,
             but if the video was already in the playlist, then we just close it to indicate that no changes were made
          */
         if (!playlistCheckbox.classList.contains('checked')) {
             playlistCheckbox.click()
         } else {
-            addToButton.click()
+            saveToButton.click()
         }
     }
 
