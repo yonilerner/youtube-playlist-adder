@@ -39,7 +39,7 @@
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
-        const saveToButton = await findElem('.yt-icon-button[aria-label="Save to"] .ytd-button-renderer', menuRenderer)
+        const saveToButton = await findElem('.yt-icon-button[aria-label="Save"] .ytd-button-renderer', menuRenderer)
         // Only click the Add to button if the menu is inactive
         if (!menuRenderer.hasAttribute('menu-active')) {
             saveToButton.click()
