@@ -35,7 +35,8 @@
         return result
     }
 
-    const run = async () => {
+    const run = async opts => {
+        console.log('Injected with opts', opts)
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
@@ -52,7 +53,7 @@
         // Find the playlist that we want to add the video to
         const desiredPlaylist = Array.from(playlistsElem.children)
             .map((elem, i) => ({name: elem.textContent.trim(), i}))
-            .filter(playlistData => playlistData.name === 'WatchFirst')[0]
+            .filter(playlistData => playlistData.name === opts.playlist)[0]
         if (!desiredPlaylist) {
             throw new Error('Couldnt find desired playlist')
         }
@@ -80,16 +81,18 @@
         chrome.runtime.sendMessage({error: e.stack})
     }
 
-    if (document.readyState === 'complete') {
-        run().then(successFunc, errorFunc)
-    } else {
-        const loadFunc = () => {
-            run()
-                .then(successFunc, errorFunc)
-                .then(() => {
-                    window.removeEventListener('load', loadFunc)
-                })
+    chrome.runtime.onMessage.addListener(msg => {
+        if (document.readyState === 'complete') {
+            run(msg).then(successFunc, errorFunc)
+        } else {
+            const loadFunc = () => {
+                run(msg)
+                    .then(successFunc, errorFunc)
+                    .then(() => {
+                        window.removeEventListener('load', loadFunc)
+                    })
+            }
+            window.addEventListener('load', loadFunc)
         }
-        window.addEventListener('load', loadFunc)
-    }
+    })
 })()

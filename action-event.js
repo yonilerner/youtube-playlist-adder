@@ -1,5 +1,6 @@
-const message = document.getElementById('message')
-message.textContent = 'Gathering tabs...'
+const closeWarningElem = document.getElementById('close-warning')
+const messageElem = document.getElementById('message')
+// messageElem.textContent = 'Gathering tabs...'
 
 const errors = document.getElementById('errors')
 const addError = error => {
@@ -8,48 +9,61 @@ const addError = error => {
     errors.appendChild(li)
 }
 
-console.log('Action clicked')
+function run(opts) {
+    console.log('Running with opts', opts)
+    chrome.tabs.query({
+        currentWindow: true,
+        status: 'complete',
+        url: 'https://*.youtube.com/watch*'
+    }, tabs => {
+        console.log('Found tabs:', tabs)
 
-chrome.tabs.query({
-    currentWindow: true,
-    status: 'complete',
-    url: 'https://*.youtube.com/watch*'
-}, tabs => {
-    console.log('Found tabs:', tabs)
-
-    if (tabs.length === 0) {
-        message.textContent = 'No YouTube video tabs found!'
-        return
-    }
-
-    const tabsStillWorking = new Set(tabs.map(tab => tab.id))
-    const getNextTab = () => Array.from(tabsStillWorking)[0]
-
-    const updateProgressWithTabCompletion = tabId => {
-        if (tabId) {
-            tabsStillWorking.delete(tabId)
+        if (tabs.length === 0) {
+            messageElem.textContent = 'No YouTube video tabs found!'
+            return
         }
-        message.textContent = `Progress: ${tabs.length - tabsStillWorking.size}/${tabs.length}`
-    }
 
-    const runScriptForTab = tabId => {
-        chrome.tabs.executeScript(tabId, {file: 'injected-script.js'})
-    }
+        closeWarningElem.style.display = 'block'
 
-    updateProgressWithTabCompletion()
-    runScriptForTab(getNextTab())
-    chrome.runtime.onMessage.addListener((msg, sender) => {
-        if (sender.tab) {
-            updateProgressWithTabCompletion(sender.tab.id)
-            if (msg.error) {
-                addError(msg.error)
+        const tabsStillWorking = new Set(tabs.map(tab => tab.id))
+        const getNextTab = () => Array.from(tabsStillWorking)[0]
+
+        const updateProgressWithTabCompletion = tabId => {
+            if (tabId) {
+                tabsStillWorking.delete(tabId)
             }
-            if (tabsStillWorking.size === 0) {
-                console.log('Done')
-                message.textContent = 'Done!'
-            } else {
-                runScriptForTab(getNextTab())
-            }
+            messageElem.textContent = `Progress: ${tabs.length - tabsStillWorking.size}/${tabs.length}`
         }
+
+        const runScriptForTab = tabId => {
+            chrome.tabs.executeScript(tabId, {file: 'injected-script.js'})
+            chrome.tabs.sendMessage(tabId, opts)
+        }
+
+        updateProgressWithTabCompletion()
+        runScriptForTab(getNextTab())
+        chrome.runtime.onMessage.addListener((msg, sender) => {
+            if (sender.tab) {
+                updateProgressWithTabCompletion(sender.tab.id)
+                if (msg.error) {
+                    addError(msg.error)
+                }
+                if (tabsStillWorking.size === 0) {
+                    messageElem.textContent = 'Done!'
+                    closeWarningElem.style.display = 'none'
+                } else {
+                    // TODO Parallelize?
+                    runScriptForTab(getNextTab())
+                }
+            }
+        })
     })
-})
+}
+
+function keyDown(e) {
+    if (e.keyCode === 13) {
+        run({playlist: e.target.value})
+    }
+}
+
+document.getElementById('playlist').onkeydown = keyDown
