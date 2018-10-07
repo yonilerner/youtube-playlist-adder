@@ -1,4 +1,4 @@
-(function() {
+const listener = opts => {
     const log = msg => {
         console.log(msg)
         chrome.runtime.sendMessage({log: msg})
@@ -39,7 +39,7 @@
         return result
     }
 
-    const run = async opts => {
+    const run = async () => {
         log('Injected with opts', opts)
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
@@ -79,26 +79,28 @@
 
     const successFunc = () => {
         log('Success')
-        chrome.runtime.sendMessage({done: true})
+        chrome.runtime.sendMessage({done: true, opts})
     }
     const errorFunc = e => {
         log('Error', e)
-        chrome.runtime.sendMessage({done: true, error: e.stack})
+        chrome.runtime.sendMessage({done: true, error: e.stack, opts})
     }
 
-    chrome.runtime.onMessage.addListener(msg => {
-        log('Got message: ' + JSON.stringify(msg))
-        if (document.readyState === 'complete') {
-            run(msg).then(successFunc, errorFunc)
-        } else {
-            const loadFunc = () => {
-                run(msg)
-                    .then(successFunc, errorFunc)
-                    .then(() => {
-                        window.removeEventListener('load', loadFunc)
-                    })
-            }
-            window.addEventListener('load', loadFunc)
+    log('Got message: ' + JSON.stringify(opts))
+    if (document.readyState === 'complete') {
+        run(opts).then(successFunc, errorFunc)
+    } else {
+        const loadFunc = () => {
+            run(opts)
+                .then(successFunc, errorFunc)
+                .then(() => {
+                    window.removeEventListener('load', loadFunc)
+                })
         }
-    })
+        window.addEventListener('load', loadFunc)
+    }
+}
+(function() {
+    chrome.runtime.onMessage.removeListener(listener)
+    chrome.runtime.onMessage.addListener(listener)
 })()
