@@ -48,16 +48,20 @@ function run(opts) {
                 if (msg.log) {
                     console.log(`Script logged: '${msg.log}'`)
                 }
-                updateProgressWithTabCompletion(sender.tab.id)
+
                 if (msg.error) {
                     addError(msg.error)
                 }
-                if (tabsStillWorking.size === 0) {
-                    messageElem.textContent = 'Done!'
-                    closeWarningElem.style.display = 'none'
-                } else {
-                    // TODO Parallelize?
-                    runScriptForTab(getNextTab())
+
+                if (msg.done) {
+                    updateProgressWithTabCompletion(sender.tab.id)
+                    if (tabsStillWorking.size === 0) {
+                        messageElem.textContent = 'Done!'
+                        closeWarningElem.style.display = 'none'
+                    } else {
+                        // TODO Parallelize?
+                        runScriptForTab(getNextTab())
+                    }
                 }
             }
         })

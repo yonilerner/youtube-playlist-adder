@@ -44,6 +44,7 @@
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
+        // TODO Make this more flexible than just [aria-label="Save"]; this keeps changing
         const saveToButton = await findElem('.yt-icon-button[aria-label="Save"] .ytd-button-renderer', menuRenderer)
         // Only click the Add to button if the menu is inactive
         if (!menuRenderer.hasAttribute('menu-active')) {
@@ -78,11 +79,11 @@
 
     const successFunc = () => {
         log('Success')
-        chrome.runtime.sendMessage({})
+        chrome.runtime.sendMessage({done: true})
     }
     const errorFunc = e => {
         log('Error', e)
-        chrome.runtime.sendMessage({error: e.stack})
+        chrome.runtime.sendMessage({done: true, error: e.stack})
     }
 
     chrome.runtime.onMessage.addListener(msg => {
