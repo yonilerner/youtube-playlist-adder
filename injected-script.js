@@ -1,4 +1,8 @@
-(function() {
+const listener = opts => {
+    const log = msg => {
+        console.log(msg)
+        chrome.runtime.sendMessage({log: msg})
+    }
     const sleep = async ms => new Promise(res => setTimeout(res, ms))
 
     /*
@@ -36,9 +40,11 @@
     }
 
     const run = async () => {
+        log('Injected with opts', opts)
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
+        // TODO Make this more flexible than just [aria-label="Save"]; this keeps changing
         const saveToButton = await findElem('.yt-icon-button[aria-label="Save"] .ytd-button-renderer', menuRenderer)
         // Only click the Add to button if the menu is inactive
         if (!menuRenderer.hasAttribute('menu-active')) {
@@ -52,7 +58,7 @@
         // Find the playlist that we want to add the video to
         const desiredPlaylist = Array.from(playlistsElem.children)
             .map((elem, i) => ({name: elem.textContent.trim(), i}))
-            .filter(playlistData => playlistData.name === 'WatchFirst')[0]
+            .filter(playlistData => playlistData.name === opts.playlist)[0]
         if (!desiredPlaylist) {
             throw new Error('Couldnt find desired playlist')
         }
@@ -72,19 +78,20 @@
     }
 
     const successFunc = () => {
-        console.log('Success')
-        chrome.runtime.sendMessage({})
+        log('Success')
+        chrome.runtime.sendMessage({done: true, opts})
     }
     const errorFunc = e => {
-        console.log('Error', e)
-        chrome.runtime.sendMessage({error: e.stack})
+        log('Error', e)
+        chrome.runtime.sendMessage({done: true, error: e.stack, opts})
     }
 
+    log('Got message: ' + JSON.stringify(opts))
     if (document.readyState === 'complete') {
-        run().then(successFunc, errorFunc)
+        run(opts).then(successFunc, errorFunc)
     } else {
         const loadFunc = () => {
-            run()
+            run(opts)
                 .then(successFunc, errorFunc)
                 .then(() => {
                     window.removeEventListener('load', loadFunc)
@@ -92,4 +99,8 @@
         }
         window.addEventListener('load', loadFunc)
     }
+}
+(function() {
+    chrome.runtime.onMessage.removeListener(listener)
+    chrome.runtime.onMessage.addListener(listener)
 })()

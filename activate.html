@@ -1,8 +1,19 @@
 <html>
 <body>
-<h1 id='message'></h1>
-<span>Dont close this until it says Done!</span>
-<ul id='errors' style='color: red;'></ul>
-<script src='action-event.js'></script>
+    <h1 id='message'></h1>
+
+    <label for="playlist">Playlist name: </label><input id="playlist" value="WatchFirst">
+
+    <span id="close-warning">Dont close this until it says Done!</span>
+
+    <ul id='errors' style='color: red;'></ul>
+
+    <script src='action-event.js'></script>
+
+    <style>
+        #close-warning {
+            display: none;
+        }
+    </style>
 </body>
 </html>

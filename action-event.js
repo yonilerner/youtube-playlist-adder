@@ -1,5 +1,5 @@
-const message = document.getElementById('message')
-message.textContent = 'Gathering tabs...'
+const closeWarningElem = document.getElementById('close-warning')
+const messageElem = document.getElementById('message')
 
 const errors = document.getElementById('errors')
 const addError = error => {
@@ -7,49 +7,105 @@ const addError = error => {
     li.textContent = error
     errors.appendChild(li)
 }
+const clearErrors = () => {
+    Array.from(errors.children).forEach(child => {
+        errors.removeChild(child)
+    })
+}
 
-console.log('Action clicked')
+/*
+This is a hack that lets us have a constant reference to a listener that we can add/remove
+below, while giving the listener access to lexically scoped stuff in `tabsQueryCallback`
+So we pass `messageListenerReference` to `chrome.runtime.onMessage.add/removeListener`, but the
+actual functionality is in `messageListenerReference.listenerFunc`, which is assigned dynamically
+ */
+const messageListenerReference = (msg, sender) => {
+    messageListenerReference.listenerFunc(msg, sender)
+}
 
-chrome.tabs.query({
-    currentWindow: true,
-    status: 'complete',
-    url: 'https://*.youtube.com/watch*'
-}, tabs => {
+const tabsQueryCallback = (tabs, opts) => {
     console.log('Found tabs:', tabs)
 
     if (tabs.length === 0) {
-        message.textContent = 'No YouTube video tabs found!'
+        messageElem.textContent = 'No YouTube video tabs found!'
         return
     }
 
+    closeWarningElem.style.display = 'block'
+
     const tabsStillWorking = new Set(tabs.map(tab => tab.id))
-    const getNextTab = () => Array.from(tabsStillWorking)[0]
 
     const updateProgressWithTabCompletion = tabId => {
         if (tabId) {
             tabsStillWorking.delete(tabId)
         }
-        message.textContent = `Progress: ${tabs.length - tabsStillWorking.size}/${tabs.length}`
+        messageElem.textContent = `Progress: ${tabs.length - tabsStillWorking.size}/${tabs.length}`
     }
 
-    const runScriptForTab = tabId => {
-        chrome.tabs.executeScript(tabId, {file: 'injected-script.js'})
+    const runScriptForTab = (tabId, tabOpts) => {
+        chrome.tabs.executeScript(tabId, {file: 'injected-script.js'}, () => {
+            chrome.tabs.sendMessage(tabId, tabOpts)
+        })
+    }
+
+    const checkIfDone = tabId => {
+        updateProgressWithTabCompletion(tabId)
+        if (tabsStillWorking.size === 0) {
+            messageElem.textContent = 'Done!'
+            closeWarningElem.style.display = 'none'
+        } else {
+            // For some reason doing them in parallel just doesnt work
+            runScriptForTab(Array.from(tabsStillWorking)[0], opts)
+        }
     }
 
     updateProgressWithTabCompletion()
-    runScriptForTab(getNextTab())
-    chrome.runtime.onMessage.addListener((msg, sender) => {
+
+    // First make sure the first tab works, see below
+    const firstTab = tabs[0]
+    runScriptForTab(firstTab.id, {...opts, firstTab: true})
+
+    messageListenerReference.listenerFunc = (msg, sender) => {
         if (sender.tab) {
-            updateProgressWithTabCompletion(sender.tab.id)
+            if (msg.log) {
+                console.log(`Script logged: '${msg.log}' from tab ${sender.tab.id}`)
+            } else {
+                console.log(`Got message from tab ${sender.tab.id}: ${JSON.stringify(msg)}`)
+            }
+
+            let firstTabFailed = false
+
             if (msg.error) {
                 addError(msg.error)
+                if (msg.opts.firstTab) {
+                    messageElem.textContent = 'First tab failed, exiting'
+                    firstTabFailed = true
+                }
             }
-            if (tabsStillWorking.size === 0) {
-                console.log('Done')
-                message.textContent = 'Done!'
-            } else {
-                runScriptForTab(getNextTab())
+
+            if (msg.done && !firstTabFailed) {
+                checkIfDone(sender.tab.id)
             }
         }
-    })
-})
+    }
+
+    chrome.runtime.onMessage.removeListener(messageListenerReference)
+    chrome.runtime.onMessage.addListener(messageListenerReference)
+}
+
+function run(opts) {
+    console.log('Running with opts', opts)
+    chrome.tabs.query({
+        currentWindow: true,
+        status: 'complete',
+        url: 'https://*.youtube.com/watch*'
+    }, tabs => tabsQueryCallback(tabs, opts))
+}
+
+function keyDown(e) {
+    if (e.keyCode === 13) {
+        clearErrors()
+        run({playlist: e.target.value})
+    }
+}
+document.getElementById('playlist').onkeydown = keyDown
