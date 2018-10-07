@@ -73,14 +73,17 @@ const tabsQueryCallback = (tabs, opts) => {
                 console.log(`Got message from tab ${sender.tab.id}: ${JSON.stringify(msg)}`)
             }
 
+            let firstTabFailed = false
+
             if (msg.error) {
                 addError(msg.error)
                 if (msg.opts.firstTab) {
                     messageElem.textContent = 'First tab failed, exiting'
+                    firstTabFailed = true
                 }
             }
 
-            if (msg.done) {
+            if (msg.done && !firstTabFailed) {
                 checkIfDone(sender.tab.id)
             }
         }
