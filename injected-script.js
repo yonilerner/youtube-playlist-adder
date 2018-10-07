@@ -1,4 +1,8 @@
 (function() {
+    const log = msg => {
+        console.log(msg)
+        chrome.runtime.sendMessage({log: msg})
+    }
     const sleep = async ms => new Promise(res => setTimeout(res, ms))
 
     /*
@@ -36,7 +40,7 @@
     }
 
     const run = async opts => {
-        console.log('Injected with opts', opts)
+        log('Injected with opts', opts)
         // This represents the row of icons above the Subscribe button for up/down thumbs, sharing, adding to playlist, etc.
         const menuRenderer = await findElem('ytd-menu-renderer.style-scope.ytd-video-primary-info-renderer')
         // This represents the button for opening the playlist box to add/remove video to/from playlists
@@ -73,15 +77,16 @@
     }
 
     const successFunc = () => {
-        console.log('Success')
+        log('Success')
         chrome.runtime.sendMessage({})
     }
     const errorFunc = e => {
-        console.log('Error', e)
+        log('Error', e)
         chrome.runtime.sendMessage({error: e.stack})
     }
 
     chrome.runtime.onMessage.addListener(msg => {
+        log('Got message: ' + JSON.stringify(msg))
         if (document.readyState === 'complete') {
             run(msg).then(successFunc, errorFunc)
         } else {

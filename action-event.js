@@ -36,14 +36,18 @@ function run(opts) {
         }
 
         const runScriptForTab = tabId => {
-            chrome.tabs.executeScript(tabId, {file: 'injected-script.js'})
-            chrome.tabs.sendMessage(tabId, opts)
+            chrome.tabs.executeScript(tabId, {file: 'injected-script.js'}, () => {
+                chrome.tabs.sendMessage(tabId, opts)
+            })
         }
 
         updateProgressWithTabCompletion()
         runScriptForTab(getNextTab())
         chrome.runtime.onMessage.addListener((msg, sender) => {
             if (sender.tab) {
+                if (msg.log) {
+                    console.log(`Script logged: '${msg.log}'`)
+                }
                 updateProgressWithTabCompletion(sender.tab.id)
                 if (msg.error) {
                     addError(msg.error)
