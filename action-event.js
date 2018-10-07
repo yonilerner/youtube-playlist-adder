@@ -7,6 +7,11 @@ const addError = error => {
     li.textContent = error
     errors.appendChild(li)
 }
+const clearErrors = () => {
+    Array.from(errors.children).forEach(child => {
+        errors.removeChild(child)
+    })
+}
 
 /*
 This is a hack that lets us have a constant reference to a listener that we can add/remove
@@ -96,6 +101,7 @@ function run(opts) {
 
 function keyDown(e) {
     if (e.keyCode === 13) {
+        clearErrors()
         run({playlist: e.target.value})
     }
 }
