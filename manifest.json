@@ -4,10 +4,29 @@
   "version": "1.0.5",
   "manifest_version": 2,
   "browser_action": {
-    "default_popup": "activate.html"
+    "default_popup": "playlist-select.html"
   },
   "permissions": [
     "tabs",
-    "https://*.youtube.com/watch*"
+    "identity",
+    "storage",
+    "https://*.youtube.com/*"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "oauth2": {
+    "client_id": "664006874534-0cnpb6sasn1sn12avu7qesh52kv1qklb.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/youtube.force-ssl"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.youtube.com/*"],
+      "all_frames": true,
+      "js": ["video-selector-injected.js"]
+    }
   ]
 }
