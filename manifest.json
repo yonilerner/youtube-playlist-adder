@@ -1,7 +1,7 @@
 {
   "name": "YouTube Playlist Adder",
   "description" : "Adds open YouTube videos in all tabs to a single playlist",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "manifest_version": 2,
   "browser_action": {
     "default_popup": "activate.html"
