@@ -9,7 +9,7 @@ const clickListener = e => {
         if (videoId) {
             foundVideo = true
             // Tell the background script to hit the Youtube API
-            chrome.runtime.sendMessage({video: videoId, playlist})
+            chrome.runtime.sendMessage({func: 'addToPlaylist', video: videoId, playlist})
         }
     }
     // TODO be smarter about clicks that arent supposed to be for videos and dont navigate; eg. the page background

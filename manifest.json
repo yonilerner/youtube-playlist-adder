@@ -1,25 +1,24 @@
 {
-  "name": "YouTube Playlist Adder",
-  "description" : "Adds open YouTube videos in all tabs to a single playlist",
-  "version": "2.0.0",
-  "manifest_version": 2,
-  "browser_action": {
+  "name": "YouTube Toolkit",
+  "description" : "Toolkit for improving the Youtube experience.",
+  "version": "3.0.0",
+  "manifest_version": 3,
+  "action": {
     "default_popup": "playlist-select.html"
   },
   "permissions": [
     "tabs",
     "identity",
-    "storage",
+    "storage"
+  ],
+  "host_permissions": [
     "https://*.youtube.com/*"
   ],
   "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": false
+    "service_worker": "service-worker.js"
   },
   "oauth2": {
-    "client_id": "664006874534-0cnpb6sasn1sn12avu7qesh52kv1qklb.apps.googleusercontent.com",
+    "client_id": "728338904892-vba6oa3hd1buj5s58najabsa5rm0m4ri.apps.googleusercontent.com",
     "scopes": ["https://www.googleapis.com/auth/youtube.force-ssl"]
   },
   "content_scripts": [
@@ -28,5 +27,6 @@
       "all_frames": true,
       "js": ["video-selector-injected.js"]
     }
-  ]
+  ],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgAcLYrzj7zKrfEh350jr28cAtNbbtrKMotK+bTATTBnresliv+o6GbuErVIym9jbHcRiYkBoTI7bfkBMns8sikumJ2lea7OtrZ7K0+FpUf/bYYa34rFUrbeRBm6+wHZHI4NccRYD0CXcbFwA4fQ/WPUvgbGyEwv2bnci6fm/wzB2n9fqb61YqnwUdMCuTvO6O3cX6zWX9VldDXinCBrQ4jDPy6wBKo1iRO44tAF8VE/qhuTrhe0/jKi9wyMw0YFFJ+roG+xYxI+ryP6ZnehyZ+J4vMoYmO9uVDYxZgvEB56tHyXppb206SZzG8Snk8xZYcTgXhx3YgltXZww/HMIkwIDAQAB"
 }

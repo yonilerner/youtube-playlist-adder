@@ -1,10 +1,29 @@
 // This has been restricted to this chrome extension and the Youtube Data v3 API
-const API_KEY = 'AIzaSyC0fXQoMTBMclUyfhi3YBJERCHYUC2nHZs'
+const API_KEY = 'AIzaSyA3WFFsNfMYqCtI3ysjDlkzSZQh-wjjfzs'
+
+const getStorage = async var_ => {
+    return new Promise(resolve => {
+        chrome.storage.local.get(var_, result => {
+            resolve(result)
+        })
+    })
+}
+
+async function getToken() {
+    const {token} = await getStorage('token')
+    return token
+}
+
+const setStorage = async vars => {
+    return new Promise(resolve => {
+        chrome.storage.local.set(vars, () => resolve())
+    })
+}
+
 
 // Get the oauth token from the browser identity
-let oauthToken
 chrome.identity.getAuthToken({interactive: true}, async token => {
-    oauthToken = token
+    await setStorage({token})
 })
 
 const getHeaders = token => {
@@ -18,8 +37,10 @@ const getPlaylistsPage = async (nextPageToken) => {
     const params = {
         part: 'id,snippet',
         mine: true,
-        key: API_KEY
+        key: API_KEY,
+        maxResults: 50,
     }
+    const oauthToken = await getToken()
     if (nextPageToken) {
         params.pageToken = nextPageToken
     }
@@ -63,6 +84,7 @@ const addToPlaylist = async (playlist, video) => {
         part: 'snippet',
         key: API_KEY
     })
+    const oauthToken = await getToken()
     const response = await fetch(url, {
         headers: getHeaders(oauthToken),
         method: 'POST',
@@ -83,13 +105,20 @@ const addToPlaylist = async (playlist, video) => {
     return json
 }
 
-// Add these to the window so other scripts can call chrome.runtime.getBackgroundScript()...getPlaylists, etc.
-window.getPlaylists = getPlaylists
-window.addToPlaylist = addToPlaylist
 
 // Listen for messages from the content script asking to add videos to a playlist
-chrome.runtime.onMessage.addListener(async (msg, from) => {
-    if (msg.playlist && msg.video) {
-        await addToPlaylist(msg.playlist, msg.video)
+
+async function messageHandler(msg, from, sendResponse) {
+    let result
+    if (msg.func === 'getPlaylists') {
+        result = await getPlaylists()
     }
+    if (msg.func === 'addToPlaylist') {
+        result = await addToPlaylist(msg.playlist, msg.video)
+    }
+    await sendResponse({result})
+}
+chrome.runtime.onMessage.addListener((msg, from, sendResponse) => {
+    messageHandler(msg, from, sendResponse)
+    return true
 })

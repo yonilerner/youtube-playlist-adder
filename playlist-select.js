@@ -8,9 +8,9 @@ const errorElem = document.getElementById('error')
 const show = elem => elem.style.display = 'block'
 const hide = elem => elem.style.display = 'none'
 
-const getStorage = async vars => {
+const getStorage = async var_ => {
     return new Promise(resolve => {
-        chrome.storage.local.get(vars, result => {
+        chrome.storage.local.get(var_, result => {
             resolve(result)
         })
     })
@@ -36,27 +36,27 @@ const sortPlaylistsAlphabetically = (a, b) => {
 }
 
 const loadPlaylists = async() => {
-    return new Promise(resolve => {
-        // We need the getPlaylists functionality from the background script
-        chrome.runtime.getBackgroundPage(async backgroundPage => {
-            const playlists = await backgroundPage.getPlaylists()
+    return new Promise(async resolve => {
+        const result = await chrome.runtime.sendMessage({func: 'getPlaylists'})
+        console.log(result)
 
-            // Dynamically build the select list of playlists
-            playlists.sort(sortPlaylistsAlphabetically).forEach(playlist => {
-                const option = document.createElement('option')
-                // This is my default playlist :/
-                if (playlist.name === 'WatchFirst') {
-                    option.selected = 'selected'
-                }
-                option.textContent = playlist.name
-                option.value = playlist.id
-                playlistSelect.appendChild(option)
-            })
+        const playlists = result.result
 
-            loading.style.display = 'none'
-            playlistSelectContainer.style.display = 'block'
-            resolve()
+        // Dynamically build the select list of playlists
+        playlists.sort(sortPlaylistsAlphabetically).forEach(playlist => {
+            const option = document.createElement('option')
+            // This is my default playlist :/
+            if (playlist.name === 'WatchFirst') {
+                option.selected = 'selected'
+            }
+            option.textContent = playlist.name
+            option.value = playlist.id
+            playlistSelect.appendChild(option)
         })
+
+        loading.style.display = 'none'
+        playlistSelectContainer.style.display = 'block'
+        resolve()
     })
 }
 
