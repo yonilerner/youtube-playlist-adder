@@ -14,6 +14,9 @@ const clickListener = e => {
     }
     // TODO be smarter about clicks that arent supposed to be for videos and dont navigate; eg. the page background
     if (!foundVideo) {
+        if (e.target.tagName.toLowerCase() !== 'a') {
+            return
+        }
         alert('Was not a valid video link!')
     }
     e.preventDefault()
@@ -22,9 +25,13 @@ const clickListener = e => {
 }
 
 const getVideoIdFromHref = href => {
-    return new URLSearchParams(
-        new URL(href, location.origin).search
-    ).get('v')
+    if (href.includes('watch')) {
+        return new URLSearchParams(
+            new URL(href, location.origin).search
+        ).get('v')
+    } else {
+        return href.split('/').slice(-1)[0]
+    }
 }
 
 // Recursively search up the DOM for a parent with an href
@@ -32,7 +39,8 @@ const searchAncestorsForVideoLink = elem => {
     if (!elem) {
         return null
     }
-    if (elem.href && new URL(elem.href).pathname.startsWith('/watch')) {
+    const pathname = elem.href ? new URL(elem.href).pathname : ''
+    if (pathname.startsWith('/watch') || pathname.startsWith('/shorts')) {
         return elem.href
     }
     return searchAncestorsForVideoLink(elem.parentElement)
